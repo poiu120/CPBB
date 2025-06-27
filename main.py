@@ -1,108 +1,114 @@
-import sys
-print(f"Python version: {sys.version}")
-
-import os
-import json
-from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
+import logging
+from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import (
-    ApplicationBuilder, CommandHandler, MessageHandler,
-    ConversationHandler, ContextTypes, filters
+    ApplicationBuilder, CommandHandler, ContextTypes, ConversationHandler,
+    MessageHandler, filters
 )
+import os
 
-# ===== CONFIGURAZIONE TOKEN =====
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
+logger = logging.getLogger(__name__)
+
 TOKEN = os.environ["TOKEN"]
 
-# ===== FILE E COSTANTI =====
-UTENTI_FILE = "utenti.json"
-INSERISCI_NOME, INSERISCI_COGNOME, MENU = range(3)
+# Stati della conversazione
+ASK_NEW_USER, ASK_NAME, MAIN_MENU = range(3)
 
-# ===== DATABASE =====
-def carica_utenti():
-    if os.path.exists(UTENTI_FILE):
-        with open(UTENTI_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
+# Tastiere
+main_menu_keyboard = [
+    ["1. Inserisci nuovo risultato"],
+    ["2. Vedi storico partite"],
+    ["3. Vedi Classifica Generale"],
+    # spazio per nuove opzioni
+]
+main_menu_markup = ReplyKeyboardMarkup(main_menu_keyboard, one_time_keyboard=False, resize_keyboard=True)
+
+# Memorizzazione utenti semplice (in memoria)
+user_db = {}
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    user_id = update.effective_user.id
+    if user_id in user_db:
+        await update.message.reply_text(
+            "Bentornato! Scegli un'opzione dal menu qui sotto:",
+            reply_markup=main_menu_markup,
+        )
+        return MAIN_MENU
     else:
-        return {}
+        await update.message.reply_text(
+            "Sei un nuovo utente? (si/no)",
+            reply_markup=ReplyKeyboardMarkup([["si", "no"]], one_time_keyboard=True, resize_keyboard=True),
+        )
+        return ASK_NEW_USER
 
-def salva_utenti():
-    with open(UTENTI_FILE, "w", encoding="utf-8") as f:
-        json.dump(utenti, f, indent=2, ensure_ascii=False)
-
-utenti = carica_utenti()
-stato_utente = {}  # Temporaneo per nome parziale
-
-# ===== HANDLER PRINCIPALE =====
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = str(update.effective_user.id)
-    if user_id in utenti:
-        await mostra_menu(update)
-        return MENU
+async def ask_new_user(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    text = update.message.text.lower()
+    if text == "si":
+        await update.message.reply_text("Inserisci il tuo Nome e Cognome:", reply_markup=ReplyKeyboardRemove())
+        return ASK_NAME
+    elif text == "no":
+        await update.message.reply_text("Ok, bentornato! Scegli un'opzione:", reply_markup=main_menu_markup)
+        user_db[update.effective_user.id] = "utente_sconosciuto"
+        return MAIN_MENU
     else:
-        await update.message.reply_text("Benvenuto! Sei un nuovo utente? Scrivi il tuo *nome*.", parse_mode="Markdown")
-        return INSERISCI_NOME
+        await update.message.reply_text("Per favore rispondi con 'si' o 'no'.")
+        return ASK_NEW_USER
 
-# ===== REGISTRAZIONE UTENTE =====
-async def ricevi_nome(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = str(update.effective_user.id)
-    nome = update.message.text.strip()
-    stato_utente[user_id] = {"nome": nome}
-    await update.message.reply_text("Perfetto! Ora scrivi il tuo *cognome*.", parse_mode="Markdown")
-    return INSERISCI_COGNOME
+async def ask_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    user_db[update.effective_user.id] = update.message.text
+    await update.message.reply_text(
+        f"Grazie {update.message.text}! Ora puoi scegliere un'opzione dal menu.",
+        reply_markup=main_menu_markup,
+    )
+    return MAIN_MENU
 
-async def ricevi_cognome(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = str(update.effective_user.id)
-    cognome = update.message.text.strip()
-    nome = stato_utente[user_id]["nome"]
-    utenti[user_id] = {"nome": nome, "cognome": cognome}
-    salva_utenti()
-    await update.message.reply_text(f"Registrazione completata ✅: {nome} {cognome}")
-    await mostra_menu(update)
-    return MENU
-
-# ===== MENU PRINCIPALE =====
-async def mostra_menu(update: Update):
-    keyboard = [
-        [KeyboardButton("➕ Inserisci nuovo risultato")],
-        [KeyboardButton("📜 Vedi storico partite")],
-        [KeyboardButton("🏆 Vedi classifica generale")],
-        [KeyboardButton("🚧 Altre opzioni (in arrivo)")]
-    ]
-    markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
-    await update.message.reply_text("Cosa vuoi fare?", reply_markup=markup)
-
-async def gestione_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    scelta = update.message.text
-    if scelta.startswith("➕"):
-        await update.message.reply_text("👉 Funzione 'Inserisci risultato' in arrivo!")
-    elif scelta.startswith("📜"):
-        await update.message.reply_text("👉 Funzione 'Storico partite' in arrivo!")
-    elif scelta.startswith("🏆"):
-        await update.message.reply_text("👉 Funzione 'Classifica generale' in arrivo!")
-    elif scelta.startswith("🚧"):
-        await update.message.reply_text("Nuove funzionalità in arrivo!")
+async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    text = update.message.text
+    if text.startswith("1"):
+        await update.message.reply_text("Hai scelto: Inserisci nuovo risultato. (funzionalità da implementare)")
+    elif text.startswith("2"):
+        await update.message.reply_text("Hai scelto: Vedi storico partite. (funzionalità da implementare)")
+    elif text.startswith("3"):
+        await update.message.reply_text("Hai scelto: Vedi Classifica Generale. (funzionalità da implementare)")
     else:
-        await update.message.reply_text("❗ Comando non riconosciuto. Usa i pulsanti del menu.")
+        await update.message.reply_text("Selezione non valida, riprova.")
 
-# ===== CANCELLO =====
-async def annulla(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("❌ Operazione annullata.")
+    return MAIN_MENU
+
+async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    await update.message.reply_text("Operazione annullata.", reply_markup=ReplyKeyboardRemove())
     return ConversationHandler.END
 
-# ===== CONVERSATION HANDLER =====
-conv_handler = ConversationHandler(
-    entry_points=[CommandHandler("start", start)],
-    states={
-        INSERISCI_NOME: [MessageHandler(filters.TEXT & ~filters.COMMAND, ricevi_nome)],
-        INSERISCI_COGNOME: [MessageHandler(filters.TEXT & ~filters.COMMAND, ricevi_cognome)],
-        MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, gestione_menu)],
-    },
-    fallbacks=[CommandHandler("cancel", annulla)],
-)
+def main():
+    app = ApplicationBuilder().token(TOKEN).build()
 
-# ===== AVVIO BOT =====
+    conv_handler = ConversationHandler(
+        entry_points=[CommandHandler("start", start)],
+        states={
+            ASK_NEW_USER: [MessageHandler(filters.TEXT & ~filters.COMMAND, ask_new_user)],
+            ASK_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, ask_name)],
+            MAIN_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, main_menu)],
+        },
+        fallbacks=[CommandHandler("cancel", cancel)],
+        per_user=True,
+        per_chat=True,
+    )
+
+    app.add_handler(conv_handler)
+
+    # Configuro webhook con il tuo URL
+    app.run_webhook(
+        listen="0.0.0.0",
+        port=int(os.environ.get("PORT", "8443")),
+        url_path=TOKEN,
+        webhook_url=f"https://cpbb.onrender.com/{TOKEN}"
+    )
+
 if __name__ == "__main__":
     print("🤖 CesarePaveseBiliardinoBot è attivo.")
-    app = ApplicationBuilder().token(TOKEN).build()
-    app.add_handler(conv_handler)
-    app.run_polling()
+    main()
+
 
