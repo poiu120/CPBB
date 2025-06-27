@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: CPBB
+    env: python
+    buildCommand: ""
+    startCommand: python main.py
+    envVars:
+      - key: TOKEN
+        sync: false
