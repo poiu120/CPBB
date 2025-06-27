@@ -2,6 +2,7 @@ services:
   - type: web
     name: CPBB
     env: python
+    pythonVersion: 3.10.12   # <-- qui imposti la versione python
     buildCommand: ""
     startCommand: python main.py
     envVars:
