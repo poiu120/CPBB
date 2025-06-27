@@ -1,5 +1,5 @@
 services:
-  - type: web
+  - type: worker
     name: CPBB
     env: python
     pythonVersion: 3.10.12
