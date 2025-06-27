@@ -1,3 +1,6 @@
+import sys
+print(f"Python version: {sys.version}")
+
 import os
 import json
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
