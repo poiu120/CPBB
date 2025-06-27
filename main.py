@@ -97,9 +97,10 @@ conv_handler = ConversationHandler(
 )
 
 # ===== AVVIO BOT =====
-app = ApplicationBuilder().token(TOKEN).build()
-app.add_handler(conv_handler)
-
 if __name__ == "__main__":
     print("🤖 CesarePaveseBiliardinoBot è attivo.")
+    app = ApplicationBuilder().token(TOKEN).build()
+    app.add_handler(conv_handler)
     app.run_polling()
+``
+
