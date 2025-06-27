@@ -1,5 +1,5 @@
 services:
-  - type: worker
+  - type: web
     name: CPBB
     env: python
     pythonVersion: 3.10.12
@@ -8,3 +8,5 @@ services:
     envVars:
       - key: TOKEN
         sync: false
+    ports:
+      - port: 8443
