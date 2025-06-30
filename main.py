@@ -370,7 +370,8 @@ def main():
             SELECT_AVV2: [MessageHandler(filters.TEXT & ~filters.COMMAND, select_avversario2)],
             SELECT_ESITO: [MessageHandler(filters.Regex("^(Vinto|Perso)$"), select_esito)],
         },
-        fallbacks=[CommandHandler("cancel", cancel)],
+        fallbacks=[CommandHandler('start', start), CommandHandler('cancel', cancel)],
+        allow_reentry=True,
         per_user=True,
         per_chat=True,
     )
