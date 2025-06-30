@@ -360,7 +360,7 @@ conv_handler = ConversationHandler(
         fallbacks=[CommandHandler("annulla", annulla)]
     )
 
-    app.add_handler(conv_handler)
+app.add_handler(conv_handler)
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
