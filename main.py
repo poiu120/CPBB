@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 TOKEN = os.environ["TOKEN"]
 
 # Stati della conversazione
-ASK_NEW_USER, ASK_NAME, MAIN_MENU = range(3)
+ASK_NICKNAME, ASK_NAME, MAIN_MENU = range(3)
 SELECT_COMPAGNO, SELECT_AVV1, SELECT_AVV2, SELECT_ESITO = range(3, 7)
 
 # Tastiere
@@ -45,16 +45,21 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_id = update.effective_user.id
     if user_id in user_db:
         await update.message.reply_text(
-            "Bentornato! Scegli un'opzione dal menu qui sotto:",
+            f"Bentornato {user_db[user_id]['nickname']}! Scegli un'opzione dal menu qui sotto:",
             reply_markup=main_menu_markup,
         )
         return MAIN_MENU
     else:
         await update.message.reply_text(
-            "Sei un nuovo utente? (si/no)",
-            reply_markup=ReplyKeyboardMarkup([["si", "no"]], one_time_keyboard=True, resize_keyboard=True),
+            "Benvenuto! Inserisci un nickname (sarà visibile agli altri giocatori):",
+            reply_markup=ReplyKeyboardRemove()
         )
-        return ASK_NEW_USER
+        return ASK_NICKNAME
+
+async def ask_nickname(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    context.user_data["nickname"] = update.message.text.strip()
+    await update.message.reply_text("Perfetto! Ora inserisci il tuo Nome e Cognome:")
+    return ASK_NAME
 
 async def ask_new_user(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     text = update.message.text.lower()
@@ -70,9 +75,14 @@ async def ask_new_user(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
         return ASK_NEW_USER
 
 async def ask_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    user_db[update.effective_user.id] = update.message.text
+    user_id = update.effective_user.id
+    user_db[user_id] = {
+        "nickname": context.user_data["nickname"],
+        "name": update.message.text.strip(),
+        "username": update.effective_user.username or ""
+    }
     await update.message.reply_text(
-        f"Grazie {update.message.text}! Ora puoi scegliere un'opzione dal menu.",
+        f"Grazie {context.user_data['nickname']}! Ora puoi scegliere un'opzione dal menu.",
         reply_markup=main_menu_markup,
     )
     return MAIN_MENU
@@ -175,7 +185,7 @@ def main():
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
-            ASK_NEW_USER: [MessageHandler(filters.TEXT & ~filters.COMMAND, ask_new_user)],
+            ASK_NICKNAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, ask_nickname)],
             ASK_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, ask_name)],
             MAIN_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, main_menu)],
             SELECT_COMPAGNO: [MessageHandler(filters.TEXT & ~filters.COMMAND, select_compagno)],
