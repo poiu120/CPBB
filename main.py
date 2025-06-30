@@ -86,6 +86,11 @@ async def mostra_profilo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 storico_partite = []
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    print(f"Start chiamato da user_id={update.effective_user.id}")
+    print(f"user_db keys: {list(user_db.keys())}")
+    print(f"context.user_data prima clear: {context.user_data}")
+    context.user_data.clear()
+    print(f"context.user_data dopo clear: {context.user_data}")
     user_id = update.effective_user.id
     if user_id in user_db:
         await update.message.reply_text(
