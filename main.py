@@ -226,16 +226,16 @@ async def select_compagno(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     compagno = update.message.text
     context.user_data["compagno"] = compagno
     user = context.user_data["giocatore"]
-    
+
     # Escludiamo gli utenti con nickname uguale a user['nickname'] o compagno
     avversari_possibili = [v["nickname"] for v in user_db.values() if v["nickname"] not in [user["nickname"], compagno]]
-    
+
     markup = ReplyKeyboardMarkup([[n] for n in avversari_possibili], one_time_keyboard=True, resize_keyboard=True)
     await update.message.reply_text("Abbiamo giocato contro", reply_markup=markup)
     return SELECT_AVV1
 
 
-async def select_avv1(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def select_avversario1(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     avv1 = update.message.text
     context.user_data["avv1"] = avv1
     
@@ -253,7 +253,7 @@ async def select_avv1(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
     return SELECT_AVV2
 
 
-async def select_avv2(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def select_avversario2(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     avv2 = update.message.text
     context.user_data["avv2"] = avv2
     markup = ReplyKeyboardMarkup([["Vinto", "Perso"]], one_time_keyboard=True, resize_keyboard=True)
@@ -362,7 +362,10 @@ def main():
             ASK_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, ask_name)],
             MAIN_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, main_menu)],
             PROFILE_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, profilo_handler)],
-            # aggiungi qui gli altri stati se vuoi
+            SELECT_COMPAGNO: [MessageHandler(filters.TEXT & ~filters.COMMAND, select_compagno)],
+            SELECT_AVV1: [MessageHandler(filters.TEXT & ~filters.COMMAND, select_avversario1)],
+            SELECT_AVV2: [MessageHandler(filters.TEXT & ~filters.COMMAND, select_avversario2)],
+            SELECT_ESITO: [MessageHandler(filters.Regex("^(Vinto|Perso)$"), select_esito)],
         },
         fallbacks=[CommandHandler("cancel", cancel)],
         per_user=True,
