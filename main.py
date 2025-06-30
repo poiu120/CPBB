@@ -235,7 +235,7 @@ async def select_compagno(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     return SELECT_AVV1
 
 
-async def select_avversario1(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def select_avv1(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     avv1 = update.message.text
     context.user_data["avv1"] = avv1
     
@@ -253,7 +253,7 @@ async def select_avversario1(update: Update, context: ContextTypes.DEFAULT_TYPE)
     return SELECT_AVV2
 
 
-async def select_avversario2(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def select_avv2(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     avv2 = update.message.text
     context.user_data["avv2"] = avv2
     markup = ReplyKeyboardMarkup([["Vinto", "Perso"]], one_time_keyboard=True, resize_keyboard=True)
