@@ -28,16 +28,16 @@ main_menu_markup = ReplyKeyboardMarkup(main_menu_keyboard, one_time_keyboard=Fal
 
 # Database in memoria
 user_db = {
-    111111: {"nickname": "mario_r", "nome": "Mario", "cognome": "Rossi", "punteggio": 1000},
-    222222: {"nickname": "luigi_v", "nome": "Luigi", "cognome": "Verdi", "punteggio": 1000},
-    333333: {"nickname": "anna_b", "nome": "Anna", "cognome": "Bianchi", "punteggio": 1000},
-    444444: {"nickname": "carla_m", "nome": "Carla", "cognome": "Marini", "punteggio": 1000},
-    555555: {"nickname": "luca_n", "nome": "Luca", "cognome": "Neri", "punteggio": 1000},
-    666666: {"nickname": "paolo_d", "nome": "Paolo", "cognome": "De Luca", "punteggio": 1000},
-    777777: {"nickname": "sara_f", "nome": "Sara", "cognome": "Ferrari", "punteggio": 1000},
-    888888: {"nickname": "giulia_s", "nome": "Giulia", "cognome": "Seri", "punteggio": 1000},
-    999999: {"nickname": "marco_g", "nome": "Marco", "cognome": "Gallo", "punteggio": 1000},
-    101010: {"nickname": "elena_p", "nome": "Elena", "cognome": "Pini", "punteggio": 1000}
+    111111: {"nickname": "mario_r", "nome": "Mario", "cognome": "Rossi", "punteggio": 1000, "K": 60},
+    222222: {"nickname": "luigi_v", "nome": "Luigi", "cognome": "Verdi", "punteggio": 1000, "K": 60},
+    333333: {"nickname": "anna_b", "nome": "Anna", "cognome": "Bianchi", "punteggio": 1000, "K": 60},
+    444444: {"nickname": "carla_m", "nome": "Carla", "cognome": "Marini", "punteggio": 1000, "K": 60},
+    555555: {"nickname": "luca_n", "nome": "Luca", "cognome": "Neri", "punteggio": 1000, "K": 60},
+    666666: {"nickname": "paolo_d", "nome": "Paolo", "cognome": "De Luca", "punteggio": 1000, "K": 60},
+    777777: {"nickname": "sara_f", "nome": "Sara", "cognome": "Ferrari", "punteggio": 1000, "K": 60},
+    888888: {"nickname": "giulia_s", "nome": "Giulia", "cognome": "Seri", "punteggio": 1000, "K": 60},
+    999999: {"nickname": "marco_g", "nome": "Marco", "cognome": "Gallo", "punteggio": 1000, "K": 60},
+    101010: {"nickname": "elena_p", "nome": "Elena", "cognome": "Pini", "punteggio": 1000, "K": 60}
 }
 
 storico_partite = []
@@ -81,7 +81,8 @@ async def ask_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         "nickname": context.user_data["nickname"],
         "name": update.message.text.strip(),
         "username": update.effective_user.username or "",
-        "punteggio": 1000
+        "punteggio": 1000,
+        "K": 60
     }
     await update.message.reply_text(
         f"Grazie {context.user_data['nickname']}! Ora puoi scegliere un'opzione dal menu.",
@@ -171,18 +172,84 @@ async def select_avversario2(update: Update, context: ContextTypes.DEFAULT_TYPE)
     await update.message.reply_text("E abbiamo...", reply_markup=markup)
     return SELECT_ESITO
 
+import math
+
 async def select_esito(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    esito = update.message.text
+    esito = update.message.text  # "Vinto" o "Perso"
     dati = context.user_data
-    
+
+    squadra_1 = [dati["giocatore"]["nickname"], dati["compagno"]]
+    squadra_2 = [dati["avv1"], dati["avv2"]]
+
+    # Prendi punteggi e K dei giocatori
+    R = {}
+    K = {}
+    for nick in squadra_1 + squadra_2:
+        # Cerca l'utente nel db (per nickname)
+        for user in user_db.values():
+            if user["nickname"] == nick:
+                R[nick] = user["punteggio"]
+                K[nick] = user["K"]
+                break
+
+    k = 0.45
+    R_std = 600
+
+    # Calcola R_1 e R_2
+    RA = R[squadra_1[0]]
+    RB = R[squadra_1[1]]
+    RC = R[squadra_2[0]]
+    RD = R[squadra_2[1]]
+
+    R_1 = 0.5 * math.sqrt(RA * RB) + 0.5 * (k * max(RA, RB) + (1 - k) * min(RA, RB))
+    R_2 = 0.5 * math.sqrt(RC * RD) + 0.5 * (k * max(RC, RD) + (1 - k) * min(RC, RD))
+
+    # Calcola valori attesi
+    E_1 = 1 / (1 + 10 ** ((R_2 - R_1) / R_std))
+    E_2 = 1 - E_1
+
+    # Assegna S in base all'esito
+    if esito == "Vinto":
+        S_1 = 1
+        S_2 = 0
+    else:
+        S_1 = 0
+        S_2 = 1
+
+    # Aggiorna i punteggi
+    RA_nuovo = RA + K[squadra_1[0]] * (S_1 - E_1)
+    RB_nuovo = RB + K[squadra_1[1]] * (S_1 - E_1)
+    RC_nuovo = RC + K[squadra_2[0]] * (S_2 - E_2)
+    RD_nuovo = RD + K[squadra_2[1]] * (S_2 - E_2)
+
+    # Salva i nuovi punteggi nel db
+    for user in user_db.values():
+        if user["nickname"] == squadra_1[0]:
+            user["punteggio"] = round(RA_nuovo)
+        elif user["nickname"] == squadra_1[1]:
+            user["punteggio"] = round(RB_nuovo)
+        elif user["nickname"] == squadra_2[0]:
+            user["punteggio"] = round(RC_nuovo)
+        elif user["nickname"] == squadra_2[1]:
+            user["punteggio"] = round(RD_nuovo)
+
+    # Salva risultato in storico
     risultato = {
-        "squadra": [dati["giocatore"]["nickname"], dati["compagno"]],
-        "avversari": [dati["avv1"], dati["avv2"]],
+        "squadra": squadra_1,
+        "avversari": squadra_2,
         "esito": esito
     }
     storico_partite.append(risultato)
 
-    await update.message.reply_text("✅ Risultato salvato!", reply_markup=main_menu_markup)
+    await update.message.reply_text(
+        f"✅ Risultato salvato!\n"
+        f"Punteggi aggiornati:\n"
+        f"{squadra_1[0]}: {round(RA_nuovo)}\n"
+        f"{squadra_1[1]}: {round(RB_nuovo)}\n"
+        f"{squadra_2[0]}: {round(RC_nuovo)}\n"
+        f"{squadra_2[1]}: {round(RD_nuovo)}",
+        reply_markup=main_menu_markup
+    )
     return MAIN_MENU
 
 # ========== Cancel ==========
