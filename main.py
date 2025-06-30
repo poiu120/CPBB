@@ -86,12 +86,13 @@ async def mostra_profilo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 storico_partite = []
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    context.user_data.clear()
-    return ConversationHandler.END
     user_id = update.effective_user.id
+    context.user_data.clear()
+
     if user_id in user_db:
+        nickname = user_db[user_id]['nickname']
         await update.message.reply_text(
-            f"Bentornato {user_db[user_id]['nickname']}! Scegli un'opzione dal menu qui sotto:",
+            f"Bentornato {nickname}! Scegli un'opzione dal menu qui sotto:",
             reply_markup=main_menu_markup,
         )
         return MAIN_MENU
