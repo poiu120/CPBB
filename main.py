@@ -27,18 +27,17 @@ main_menu_keyboard = [
 main_menu_markup = ReplyKeyboardMarkup(main_menu_keyboard, one_time_keyboard=False, resize_keyboard=True)
 
 # Database in memoria
-user_db = {
-    1001: "Mario Rossi",
-    1002: "Luca Bianchi",
-    1003: "Giulia Verdi",
-    1004: "Anna Neri",
-    1005: "Marco Gialli",
-    1006: "Elisa Blu",
-    1007: "Davide Viola",
-    1008: "Sara Grigi",
-    1009: "Paolo Marrone",
-    1010: "Chiara Azzurra"
-}
+user_db[111111] = {"nickname": "mario_r", "nome": "Mario", "cognome": "Rossi"}
+user_db[222222] = {"nickname": "luigi_v", "nome": "Luigi", "cognome": "Verdi"}
+user_db[333333] = {"nickname": "anna_b", "nome": "Anna", "cognome": "Bianchi"}
+user_db[444444] = {"nickname": "carla_m", "nome": "Carla", "cognome": "Marini"}
+user_db[555555] = {"nickname": "luca_n", "nome": "Luca", "cognome": "Neri"}
+user_db[666666] = {"nickname": "paolo_d", "nome": "Paolo", "cognome": "De Luca"}
+user_db[777777] = {"nickname": "sara_f", "nome": "Sara", "cognome": "Ferrari"}
+user_db[888888] = {"nickname": "giulia_s", "nome": "Giulia", "cognome": "Seri"}
+user_db[999999] = {"nickname": "marco_g", "nome": "Marco", "cognome": "Gallo"}
+user_db[101010] = {"nickname": "elena_p", "nome": "Elena", "cognome": "Pini"}
+
 storico_partite = []
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
