@@ -20,11 +20,12 @@ SELECT_COMPAGNO, SELECT_AVV1, SELECT_AVV2, SELECT_ESITO = range(3, 7)
 
 # Tastiere
 main_menu_keyboard = [
-    ["1. Inserisci nuovo risultato"],
-    ["2. Vedi storico partite"],
-    ["3. Vedi Classifica Generale"],
+    ["Inserisci nuovo risultato"],
+    ["Il mio profilo"],
+    ["Visualizza classifica"],
+    ["Informazioni"]
 ]
-main_menu_markup = ReplyKeyboardMarkup(main_menu_keyboard, one_time_keyboard=False, resize_keyboard=True)
+main_menu_markup = ReplyKeyboardMarkup(main_menu_keyboard, resize_keyboard=True, one_time_keyboard=True)
 
 # Database in memoria
 user_db = {
@@ -39,6 +40,45 @@ user_db = {
     999999: {"nickname": "marco_g", "nome": "Marco", "cognome": "Gallo", "punteggio": 1000, "K": 60},
     101010: {"nickname": "elena_p", "nome": "Elena", "cognome": "Pini", "punteggio": 1000, "K": 60}
 }
+
+async def info_app(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    testo_info = (
+        "🏓 *App Biliardino*\n\n"
+        "Questa app ti permette di inserire risultati, "
+        "vedere la classifica aggiornata e visualizzare il tuo profilo.\n"
+        "Sistema di punteggi Elo personalizzato.\n"
+        "Buon divertimento!"
+    )
+    keyboard = ReplyKeyboardMarkup([["Indietro"]], resize_keyboard=True, one_time_keyboard=True)
+    await update.message.reply_markdown(testo_info, reply_markup=keyboard)
+    return MAIN_MENU
+
+async def mostra_profilo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    user_id = update.effective_user.id
+    user = user_db.get(user_id)
+    if not user:
+        await update.message.reply_text("Utente non trovato nel database.")
+        return MAIN_MENU
+
+    # Calcola statistiche semplici da storico_partite:
+    nickname = user["nickname"]
+    partite_utente = [p for p in storico_partite if nickname in p["squadra"] or nickname in p["avversari"]]
+    vinte = sum(1 for p in partite_utente if
+                (nickname in p["squadra"] and p["esito"] == "Vinto") or
+                (nickname in p["avversari"] and p["esito"] == "Perso"))
+    perse = len(partite_utente) - vinte
+
+    testo_profilo = (
+        f"👤 Profilo di *{nickname}*\n\n"
+        f"Punteggio: {user['punteggio']}\n"
+        f"Partite giocate: {len(partite_utente)}\n"
+        f"Vittorie: {vinte}\n"
+        f"Sconfitte: {perse}\n"
+    )
+
+    keyboard = ReplyKeyboardMarkup([["Vedi storico partite"], ["Indietro"]], resize_keyboard=True, one_time_keyboard=True)
+    await update.message.reply_markdown(text=testo_profilo, reply_markup=keyboard)
+    return PROFILE_MENU
 
 storico_partite = []
 
@@ -90,18 +130,56 @@ async def ask_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     )
     return MAIN_MENU
 
-async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    text = update.message.text
-    if text.startswith("1"):
-        return await nuova_partita(update, context)
-    elif text.startswith("2"):
-        await update.message.reply_text("Hai scelto: Vedi storico partite. (funzionalità da implementare)")
-    elif text.startswith("3"):
-        await mostra_classifica(update, context)
-    else:
-        await update.message.reply_text("Selezione non valida, riprova.")
+async def mostra_storico(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    user_id = update.effective_user.id
+    user = user_db.get(user_id)
+    if not user:
+        await update.message.reply_text("Utente non trovato nel database.")
+        return MAIN_MENU
 
-    return MAIN_MENU
+    nickname = user["nickname"]
+    partite_utente = [p for p in storico_partite if nickname in p["squadra"] or nickname in p["avversari"]]
+
+    if not partite_utente:
+        testo = "Non hai ancora partite registrate."
+    else:
+        righe = []
+        for p in partite_utente[-10:]:  # mostriamo max 10 ultime partite
+            squadre_1 = " & ".join(p["squadra"])
+            squadre_2 = " & ".join(p["avversari"])
+            risultato = "Vittoria" if (nickname in p["squadra"] and p["esito"] == "Vinto") or (nickname in p["avversari"] and p["esito"] == "Perso") else "Sconfitta"
+            righe.append(f"{squadre_1} vs {squadre_2} -> {risultato}")
+
+        testo = "Ultime partite:\n" + "\n".join(righe)
+
+    keyboard = ReplyKeyboardMarkup([["Indietro"]], resize_keyboard=True, one_time_keyboard=True)
+    await update.message.reply_text(texto, reply_markup=keyboard)
+    return PROFILE_MENU
+
+async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    scelta = update.message.text
+    if scelta == "Inserisci nuovo risultato":
+        return await nuova_partita(update, context)
+    elif scelta == "Il mio profilo":
+        return await mostra_profilo(update, context)
+    elif scelta == "Visualizza classifica":
+        return await mostra_classifica(update, context)
+    elif scelta == "Informazioni":
+        return await info_app(update, context)
+    else:
+        await update.message.reply_text("Seleziona una voce valida.")
+        return MAIN_MENU
+
+async def profilo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    scelta = update.message.text
+    if scelta == "Vedi storico partite":
+        return await mostra_storico(update, context)
+    elif scelta == "Indietro":
+        return await main_menu(update, context)
+    else:
+        await update.message.reply_text("Seleziona una voce valida.")
+        return PROFILE_MENU
+
 
 async def mostra_classifica(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not user_db:
