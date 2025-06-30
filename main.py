@@ -27,18 +27,18 @@ main_menu_keyboard = [
 main_menu_markup = ReplyKeyboardMarkup(main_menu_keyboard, one_time_keyboard=False, resize_keyboard=True)
 
 # Database in memoria
-user_db = {}
-
-user_db[111111] = {"nickname": "mario_r", "nome": "Mario", "cognome": "Rossi"}
-user_db[222222] = {"nickname": "luigi_v", "nome": "Luigi", "cognome": "Verdi"}
-user_db[333333] = {"nickname": "anna_b", "nome": "Anna", "cognome": "Bianchi"}
-user_db[444444] = {"nickname": "carla_m", "nome": "Carla", "cognome": "Marini"}
-user_db[555555] = {"nickname": "luca_n", "nome": "Luca", "cognome": "Neri"}
-user_db[666666] = {"nickname": "paolo_d", "nome": "Paolo", "cognome": "De Luca"}
-user_db[777777] = {"nickname": "sara_f", "nome": "Sara", "cognome": "Ferrari"}
-user_db[888888] = {"nickname": "giulia_s", "nome": "Giulia", "cognome": "Seri"}
-user_db[999999] = {"nickname": "marco_g", "nome": "Marco", "cognome": "Gallo"}
-user_db[101010] = {"nickname": "elena_p", "nome": "Elena", "cognome": "Pini"}
+user_db = {
+    111111: {"nickname": "mario_r", "nome": "Mario", "cognome": "Rossi", "punteggio": 1000},
+    222222: {"nickname": "luigi_v", "nome": "Luigi", "cognome": "Verdi", "punteggio": 1000},
+    333333: {"nickname": "anna_b", "nome": "Anna", "cognome": "Bianchi", "punteggio": 1000},
+    444444: {"nickname": "carla_m", "nome": "Carla", "cognome": "Marini", "punteggio": 1000},
+    555555: {"nickname": "luca_n", "nome": "Luca", "cognome": "Neri", "punteggio": 1000},
+    666666: {"nickname": "paolo_d", "nome": "Paolo", "cognome": "De Luca", "punteggio": 1000},
+    777777: {"nickname": "sara_f", "nome": "Sara", "cognome": "Ferrari", "punteggio": 1000},
+    888888: {"nickname": "giulia_s", "nome": "Giulia", "cognome": "Seri", "punteggio": 1000},
+    999999: {"nickname": "marco_g", "nome": "Marco", "cognome": "Gallo", "punteggio": 1000},
+    101010: {"nickname": "elena_p", "nome": "Elena", "cognome": "Pini", "punteggio": 1000}
+}
 
 storico_partite = []
 
@@ -81,6 +81,7 @@ async def ask_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         "nickname": context.user_data["nickname"],
         "name": update.message.text.strip(),
         "username": update.effective_user.username or ""
+        "punteggio": 1000
     }
     await update.message.reply_text(
         f"Grazie {context.user_data['nickname']}! Ora puoi scegliere un'opzione dal menu.",
@@ -110,10 +111,11 @@ async def mostra_classifica(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     testo += f"{'Giocatore':<25} {'Punteggio'}\n"
     testo += "-" * 40 + "\n"
 
-    for nome in sorted(user_db.values()):
-        testo += f"{nome:<25} 1000\n"
+    for user in sorted(user_db.values(), key=lambda u: u["punteggio"], reverse=True):
+        testo += f"{user['nickname']:<25} {user['punteggio']}\n"
 
     await update.message.reply_text(f"```\n{testo}\n```", parse_mode="Markdown")
+
 
 
 # ========== Funzioni nuova partita ==========
