@@ -1,11 +1,12 @@
 import logging
 from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import (
-ASK_NICKNAME, ASK_NAME, MAIN_MENU, SELECT_COMPAGNO, SELECT_AVV1, SELECT_AVV2, SELECT_ESITO, PROFILE_MENU = range(8)
-
     ApplicationBuilder, CommandHandler, ContextTypes, ConversationHandler,
     MessageHandler, filters
 )
+
+ASK_NICKNAME, ASK_NAME, MAIN_MENU, SELECT_COMPAGNO, SELECT_AVV1, SELECT_AVV2, SELECT_ESITO, PROFILE_MENU = range(8)
+
 import os
 
 logging.basicConfig(
