@@ -17,11 +17,10 @@ logger = logging.getLogger(__name__)
 
 TOKEN = os.environ["TOKEN"]
 
-# Stati della conversazione
-ASK_NICKNAME, ASK_NAME, MAIN_MENU = range(3)
-SELECT_COMPAGNO, SELECT_AVV1, SELECT_AVV2, SELECT_ESITO = range(3, 7)
+# Stati conversazione
+ASK_NICKNAME, ASK_NAME, MAIN_MENU, PROFILE_MENU = range(4)
+SELECT_COMPAGNO, SELECT_AVV1, SELECT_AVV2, SELECT_ESITO = range(4, 8)
 
-# Tastiere
 main_menu_keyboard = [
     ["Inserisci nuovo risultato"],
     ["Il mio profilo"],
@@ -29,6 +28,7 @@ main_menu_keyboard = [
     ["Informazioni"]
 ]
 main_menu_markup = ReplyKeyboardMarkup(main_menu_keyboard, resize_keyboard=True, one_time_keyboard=True)
+
 
 # Database in memoria
 user_db = {
@@ -54,7 +54,7 @@ async def info_app(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     )
     keyboard = ReplyKeyboardMarkup([["Indietro"]], resize_keyboard=True, one_time_keyboard=True)
     await update.message.reply_markdown(testo_info, reply_markup=keyboard)
-    return MAIN_MENU
+    return MAIN_MENU  # Torni a MAIN_MENU ma non chiami main_menu() subito
 
 async def mostra_profilo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_id = update.effective_user.id
@@ -169,16 +169,23 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         return await mostra_classifica(update, context)
     elif scelta == "Informazioni":
         return await info_app(update, context)
-    else:
-        await update.message.reply_text("Seleziona una voce valida.")
+    elif scelta == "Indietro":
+        # Se sei già nel main_menu e premi indietro, semplicemente rispondi con menu
+        await update.message.reply_text("Seleziona un'opzione:", reply_markup=main_menu_markup)
         return MAIN_MENU
+    else:
+        await update.message.reply_text("Seleziona una voce valida.", reply_markup=main_menu_markup)
+        return MAIN_MENU
+
 
 async def profilo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     scelta = update.message.text
     if scelta == "Vedi storico partite":
         return await mostra_storico(update, context)
     elif scelta == "Indietro":
-        return await main_menu(update, context)
+        # Torna al main menu mostrando la tastiera
+        await update.message.reply_text("Seleziona un'opzione:", reply_markup=main_menu_markup)
+        return MAIN_MENU
     else:
         await update.message.reply_text("Seleziona una voce valida.")
         return PROFILE_MENU
@@ -342,6 +349,10 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 # ========== Avvio Bot ==========
 
 def main():
+    import os
+
+    TOKEN = os.getenv("TOKEN")  # Assicurati di esportare la variabile d'ambiente TOKEN
+
     app = ApplicationBuilder().token(TOKEN).build()
 
     conv_handler = ConversationHandler(
@@ -350,10 +361,8 @@ def main():
             ASK_NICKNAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, ask_nickname)],
             ASK_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, ask_name)],
             MAIN_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, main_menu)],
-            SELECT_COMPAGNO: [MessageHandler(filters.TEXT & ~filters.COMMAND, select_compagno)],
-            SELECT_AVV1: [MessageHandler(filters.TEXT & ~filters.COMMAND, select_avversario1)],
-            SELECT_AVV2: [MessageHandler(filters.TEXT & ~filters.COMMAND, select_avversario2)],
-            SELECT_ESITO: [MessageHandler(filters.TEXT & ~filters.COMMAND, select_esito)],
+            PROFILE_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, profilo_handler)],
+            # aggiungi qui gli altri stati se vuoi
         },
         fallbacks=[CommandHandler("cancel", cancel)],
         per_user=True,
@@ -362,12 +371,7 @@ def main():
 
     app.add_handler(conv_handler)
 
-    app.run_webhook(
-        listen="0.0.0.0",
-        port=int(os.environ.get("PORT", "8443")),
-        url_path=TOKEN,
-        webhook_url=f"https://cpbb.onrender.com/{TOKEN}"
-    )
+    app.run_polling()
 
 if __name__ == "__main__":
     print("🤖 CesarePaveseBiliardinoBot è attivo.")
