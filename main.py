@@ -16,18 +16,19 @@ TOKEN = os.environ["TOKEN"]
 
 # Stati della conversazione
 ASK_NEW_USER, ASK_NAME, MAIN_MENU = range(3)
+SELECT_COMPAGNO, SELECT_AVV1, SELECT_AVV2, SELECT_ESITO = range(3, 7)
 
 # Tastiere
 main_menu_keyboard = [
     ["1. Inserisci nuovo risultato"],
     ["2. Vedi storico partite"],
     ["3. Vedi Classifica Generale"],
-    # spazio per nuove opzioni
 ]
 main_menu_markup = ReplyKeyboardMarkup(main_menu_keyboard, one_time_keyboard=False, resize_keyboard=True)
 
-# Memorizzazione utenti semplice (in memoria)
+# Database in memoria
 user_db = {}
+storico_partite = []
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_id = update.effective_user.id
@@ -68,7 +69,7 @@ async def ask_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     text = update.message.text
     if text.startswith("1"):
-        await update.message.reply_text("Hai scelto: Inserisci nuovo risultato. (funzionalità da implementare)")
+        return await nuova_partita(update, context)
     elif text.startswith("2"):
         await update.message.reply_text("Hai scelto: Vedi storico partite. (funzionalità da implementare)")
     elif text.startswith("3"):
@@ -78,9 +79,69 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
     return MAIN_MENU
 
+# ========== Funzioni nuova partita ==========
+
+async def nuova_partita(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    user_id = update.effective_user.id
+    giocatori = [v for k, v in user_db.items() if k != user_id]
+    context.user_data["giocatore"] = user_db[user_id]
+
+    if not giocatori or len(giocatori) < 3:
+        await update.message.reply_text("Servono almeno altri 3 utenti registrati per inserire un risultato.")
+        return MAIN_MENU
+
+    markup = ReplyKeyboardMarkup([[n] for n in giocatori], one_time_keyboard=True, resize_keyboard=True)
+    await update.message.reply_text("Ho giocato insieme a", reply_markup=markup)
+    return SELECT_COMPAGNO
+
+async def select_compagno(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    compagno = update.message.text
+    context.user_data["compagno"] = compagno
+    user = context.user_data["giocatore"]
+
+    avversari_possibili = [n for n in user_db.values() if n not in [user, compagno]]
+    markup = ReplyKeyboardMarkup([[n] for n in avversari_possibili], one_time_keyboard=True, resize_keyboard=True)
+    await update.message.reply_text("Abbiamo giocato contro", reply_markup=markup)
+    return SELECT_AVV1
+
+async def select_avversario1(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    avv1 = update.message.text
+    context.user_data["avv1"] = avv1
+    esclusi = [context.user_data[k] for k in ("giocatore", "compagno", "avv1")]
+
+    avversari_restanti = [n for n in user_db.values() if n not in esclusi]
+    markup = ReplyKeyboardMarkup([[n] for n in avversari_restanti], one_time_keyboard=True, resize_keyboard=True)
+    await update.message.reply_text("e", reply_markup=markup)
+    return SELECT_AVV2
+
+async def select_avversario2(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    avv2 = update.message.text
+    context.user_data["avv2"] = avv2
+    markup = ReplyKeyboardMarkup([["Vinto", "Perso"]], one_time_keyboard=True, resize_keyboard=True)
+    await update.message.reply_text("E abbiamo...", reply_markup=markup)
+    return SELECT_ESITO
+
+async def select_esito(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    esito = update.message.text
+    dati = context.user_data
+
+    risultato = {
+        "squadra": [dati["giocatore"], dati["compagno"]],
+        "avversari": [dati["avv1"], dati["avv2"]],
+        "esito": esito
+    }
+    storico_partite.append(risultato)
+
+    await update.message.reply_text("✅ Risultato salvato!", reply_markup=main_menu_markup)
+    return MAIN_MENU
+
+# ========== Cancel ==========
+
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text("Operazione annullata.", reply_markup=ReplyKeyboardRemove())
     return ConversationHandler.END
+
+# ========== Avvio Bot ==========
 
 def main():
     app = ApplicationBuilder().token(TOKEN).build()
@@ -91,6 +152,10 @@ def main():
             ASK_NEW_USER: [MessageHandler(filters.TEXT & ~filters.COMMAND, ask_new_user)],
             ASK_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, ask_name)],
             MAIN_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, main_menu)],
+            SELECT_COMPAGNO: [MessageHandler(filters.TEXT & ~filters.COMMAND, select_compagno)],
+            SELECT_AVV1: [MessageHandler(filters.TEXT & ~filters.COMMAND, select_avversario1)],
+            SELECT_AVV2: [MessageHandler(filters.TEXT & ~filters.COMMAND, select_avversario2)],
+            SELECT_ESITO: [MessageHandler(filters.TEXT & ~filters.COMMAND, select_esito)],
         },
         fallbacks=[CommandHandler("cancel", cancel)],
         per_user=True,
@@ -99,7 +164,6 @@ def main():
 
     app.add_handler(conv_handler)
 
-    # Configuro webhook con il tuo URL
     app.run_webhook(
         listen="0.0.0.0",
         port=int(os.environ.get("PORT", "8443")),
@@ -110,5 +174,3 @@ def main():
 if __name__ == "__main__":
     print("🤖 CesarePaveseBiliardinoBot è attivo.")
     main()
-
-
