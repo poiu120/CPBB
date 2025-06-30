@@ -377,14 +377,14 @@ conv_handler = ConversationHandler(
     per_chat=True,
 )
 
-    app.add_handler(conv_handler)
+app.add_handler(conv_handler)
 
-    app.run_webhook(
-        listen="0.0.0.0",
-        port=int(os.environ.get("PORT", "8443")),
-        url_path=TOKEN,
-        webhook_url=f"https://cpbb.onrender.com/{TOKEN}"
-    )
+app.run_webhook(
+    listen="0.0.0.0",
+    port=int(os.environ.get("PORT", "8443")),
+    url_path=TOKEN,
+    webhook_url=f"https://cpbb.onrender.com/{TOKEN}"
+)
 
 if __name__ == "__main__":
     print("🤖 CesarePaveseBiliardinoBot è attivo.")
