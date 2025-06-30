@@ -122,7 +122,7 @@ async def mostra_classifica(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 
 async def nuova_partita(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_id = update.effective_user.id
-    giocatori = [v for k, v in user_db.items() if k != user_id]
+    giocatori = [v["nickname"] for k, v in user_db.items() if k != user_id]
     context.user_data["giocatore"] = user_db[user_id]
 
     if not giocatori or len(giocatori) < 3:
@@ -137,21 +137,32 @@ async def select_compagno(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     compagno = update.message.text
     context.user_data["compagno"] = compagno
     user = context.user_data["giocatore"]
-
-    avversari_possibili = [n for n in user_db.values() if n not in [user, compagno]]
+    
+    # Escludiamo gli utenti con nickname uguale a user['nickname'] o compagno
+    avversari_possibili = [v["nickname"] for v in user_db.values() if v["nickname"] not in [user["nickname"], compagno]]
+    
     markup = ReplyKeyboardMarkup([[n] for n in avversari_possibili], one_time_keyboard=True, resize_keyboard=True)
     await update.message.reply_text("Abbiamo giocato contro", reply_markup=markup)
     return SELECT_AVV1
 
+
 async def select_avversario1(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     avv1 = update.message.text
     context.user_data["avv1"] = avv1
-    esclusi = [context.user_data[k] for k in ("giocatore", "compagno", "avv1")]
-
-    avversari_restanti = [n for n in user_db.values() if n not in esclusi]
+    
+    # Prepara lista di nickname da escludere
+    esclusi = [
+        context.user_data["giocatore"]["nickname"],
+        context.user_data["compagno"],
+        avv1
+    ]
+    
+    avversari_restanti = [v["nickname"] for v in user_db.values() if v["nickname"] not in esclusi]
+    
     markup = ReplyKeyboardMarkup([[n] for n in avversari_restanti], one_time_keyboard=True, resize_keyboard=True)
     await update.message.reply_text("e", reply_markup=markup)
     return SELECT_AVV2
+
 
 async def select_avversario2(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     avv2 = update.message.text
@@ -163,9 +174,9 @@ async def select_avversario2(update: Update, context: ContextTypes.DEFAULT_TYPE)
 async def select_esito(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     esito = update.message.text
     dati = context.user_data
-
+    
     risultato = {
-        "squadra": [dati["giocatore"], dati["compagno"]],
+        "squadra": [dati["giocatore"]["nickname"], dati["compagno"]],
         "avversari": [dati["avv1"], dati["avv2"]],
         "esito": esito
     }
