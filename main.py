@@ -371,7 +371,7 @@ def main():
 
     app.add_handler(conv_handler)
 
-    app.run_webhook(More actions
+    app.run_webhook(
         listen="0.0.0.0",
         port=int(os.environ.get("PORT", "8443")),
         url_path=TOKEN,
