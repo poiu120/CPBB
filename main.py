@@ -371,14 +371,12 @@ def main():
 
     app.add_handler(conv_handler)
 
-    app.run_webhook(
+    app.run_webhook(More actions
         listen="0.0.0.0",
         port=int(os.environ.get("PORT", "8443")),
         url_path=TOKEN,
-        webhook_url=f"{WEBHOOK_URL}/{TOKEN}"
+        webhook_url=f"https://cpbb.onrender.com/{TOKEN}"
     )
-    
-    app.run_polling()
 
 if __name__ == "__main__":
     print("🤖 CesarePaveseBiliardinoBot è attivo.")
