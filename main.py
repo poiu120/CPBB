@@ -108,18 +108,7 @@ async def ask_nickname(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     await update.message.reply_text("Perfetto! Ora inserisci il tuo Nome e Cognome:")
     return ASK_NAME
 
-async def ask_new_user(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    text = update.message.text.lower()
-    if text == "si":
-        await update.message.reply_text("Inserisci il tuo Nome e Cognome:", reply_markup=ReplyKeyboardRemove())
-        return ASK_NAME
-    elif text == "no":
-        await update.message.reply_text("Ok, bentornato! Scegli un'opzione:", reply_markup=main_menu_markup)
-        user_db[update.effective_user.id] = "utente_sconosciuto"
-        return MAIN_MENU
-    else:
-        await update.message.reply_text("Per favore rispondi con 'si' o 'no'.")
-        return ASK_NEW_USER
+
 
 async def ask_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_id = update.effective_user.id
@@ -331,6 +320,30 @@ async def select_esito(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
         "esito": esito
     }
     storico_partite.append(risultato)
+    
+    # --- Inizio codice notifica ---
+    # Manda una notifica ai giocatori coinvolti (escludendo chi ha inserito la partita)
+    autore = dati["giocatore"]["nickname"]
+    coinvolti = set(squadra_1 + squadra_2)
+    coinvolti.discard(autore)  # escludi chi ha inserito
+
+    for nick in coinvolti:
+        # Trova user_id dal nickname per inviare messaggio
+        for user_id, user in user_db.items():
+            if user["nickname"] == nick:
+                try:
+                    await context.bot.send_message(
+                        chat_id=user_id,
+                        text=(
+                            f"⚠️ Ciao {nick}, {autore} ha inserito una partita in cui sei coinvolto!\n"
+                            f"Controlla la classifica aggiornata o il tuo storico partite."
+                        )
+                    )
+                except Exception as e:
+                    print(f"Errore inviando notifica a {nick}: {e}")
+                break
+    # --- Fine codice notifica ---
+    
 
     await update.message.reply_text(
         f"✅ Risultato salvato!\n"
@@ -342,6 +355,9 @@ async def select_esito(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
         reply_markup=main_menu_markup
     )
     return MAIN_MENU
+
+
+
 
 # ========== Cancel ==========
 
