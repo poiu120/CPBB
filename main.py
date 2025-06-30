@@ -27,7 +27,18 @@ main_menu_keyboard = [
 main_menu_markup = ReplyKeyboardMarkup(main_menu_keyboard, one_time_keyboard=False, resize_keyboard=True)
 
 # Database in memoria
-user_db = {}
+user_db = {
+    1001: "Mario Rossi",
+    1002: "Luca Bianchi",
+    1003: "Giulia Verdi",
+    1004: "Anna Neri",
+    1005: "Marco Gialli",
+    1006: "Elisa Blu",
+    1007: "Davide Viola",
+    1008: "Sara Grigi",
+    1009: "Paolo Marrone",
+    1010: "Chiara Azzurra"
+}
 storico_partite = []
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -73,11 +84,26 @@ async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     elif text.startswith("2"):
         await update.message.reply_text("Hai scelto: Vedi storico partite. (funzionalità da implementare)")
     elif text.startswith("3"):
-        await update.message.reply_text("Hai scelto: Vedi Classifica Generale. (funzionalità da implementare)")
+        await mostra_classifica(update, context)
     else:
         await update.message.reply_text("Selezione non valida, riprova.")
 
     return MAIN_MENU
+
+async def mostra_classifica(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not user_db:
+        await update.message.reply_text("⚠️ Nessun utente registrato.")
+        return
+
+    testo = "📊 *Classifica Generale*\n\n"
+    testo += f"{'Giocatore':<25} {'Punteggio'}\n"
+    testo += "-" * 40 + "\n"
+
+    for nome in sorted(user_db.values()):
+        testo += f"{nome:<25} 1000\n"
+
+    await update.message.reply_text(f"```\n{testo}\n```", parse_mode="Markdown")
+
 
 # ========== Funzioni nuova partita ==========
 
