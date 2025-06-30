@@ -361,21 +361,21 @@ conv_handler = ConversationHandler(
     )
 
 app.add_handler(conv_handler)
-    conv_handler = ConversationHandler(
-        entry_points=[CommandHandler("start", start)],
-        states={
-            ASK_NICKNAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, ask_nickname)],
-            ASK_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, ask_name)],
-            MAIN_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, main_menu)],
-            SELECT_COMPAGNO: [MessageHandler(filters.TEXT & ~filters.COMMAND, select_compagno)],
-            SELECT_AVV1: [MessageHandler(filters.TEXT & ~filters.COMMAND, select_avversario1)],
-            SELECT_AVV2: [MessageHandler(filters.TEXT & ~filters.COMMAND, select_avversario2)],
-            SELECT_ESITO: [MessageHandler(filters.TEXT & ~filters.COMMAND, select_esito)],
-        },
-        fallbacks=[CommandHandler("cancel", cancel)],
-        per_user=True,
-        per_chat=True,
-    )
+conv_handler = ConversationHandler(
+    entry_points=[CommandHandler("start", start)],
+    states={
+        ASK_NICKNAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, ask_nickname)],
+        ASK_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, ask_name)],
+        MAIN_MENU: [MessageHandler(filters.TEXT & ~filters.COMMAND, main_menu)],
+        SELECT_COMPAGNO: [MessageHandler(filters.TEXT & ~filters.COMMAND, select_compagno)],
+        SELECT_AVV1: [MessageHandler(filters.TEXT & ~filters.COMMAND, select_avversario1)],
+        SELECT_AVV2: [MessageHandler(filters.TEXT & ~filters.COMMAND, select_avversario2)],
+        SELECT_ESITO: [MessageHandler(filters.TEXT & ~filters.COMMAND, select_esito)],
+    },
+    fallbacks=[CommandHandler("cancel", cancel)],
+    per_user=True,
+    per_chat=True,
+)
 
     app.add_handler(conv_handler)
 
