@@ -27,6 +27,8 @@ main_menu_keyboard = [
 main_menu_markup = ReplyKeyboardMarkup(main_menu_keyboard, one_time_keyboard=False, resize_keyboard=True)
 
 # Database in memoria
+user_db = {}
+
 user_db[111111] = {"nickname": "mario_r", "nome": "Mario", "cognome": "Rossi"}
 user_db[222222] = {"nickname": "luigi_v", "nome": "Luigi", "cognome": "Verdi"}
 user_db[333333] = {"nickname": "anna_b", "nome": "Anna", "cognome": "Bianchi"}
