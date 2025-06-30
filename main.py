@@ -156,7 +156,7 @@ async def mostra_storico(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         testo = "Ultime partite:\n" + "\n".join(righe)
 
     keyboard = ReplyKeyboardMarkup([["Indietro"]], resize_keyboard=True, one_time_keyboard=True)
-    await update.message.reply_text("", reply_markup=keyboard)
+    await update.message.reply_text("Non so che dire boh", reply_markup=keyboard)
     return PROFILE_MENU
 
 async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
