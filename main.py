@@ -80,7 +80,7 @@ async def ask_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_db[user_id] = {
         "nickname": context.user_data["nickname"],
         "name": update.message.text.strip(),
-        "username": update.effective_user.username or ""
+        "username": update.effective_user.username or "",
         "punteggio": 1000
     }
     await update.message.reply_text(
