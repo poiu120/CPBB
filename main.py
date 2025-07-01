@@ -216,13 +216,26 @@ async def nuova_partita(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 
 async def select_compagno(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     compagno = update.message.text
-    context.user_data["compagno"] = compagno
     user = context.user_data["giocatore"]
+    nickname_utente = user["nickname"]
 
-    # Escludiamo gli utenti con nickname uguale a user['nickname'] o compagno
-    avversari_possibili = [v["nickname"] for v in user_db.values() if v["nickname"] not in [user["nickname"], compagno]]
+    # Genera lista di compagni validi (tutti tranne il giocatore stesso)
+    compagni_validi = [v["nickname"] for v in user_db.values() if v["nickname"] != nickname_utente]
 
+    # Verifica che l'input sia valido
+    if compagno not in compagni_validi:
+        await update.message.reply_text(
+            "⚠️ Scelta non valida. Seleziona il compagno dalla lista usando i pulsanti."
+        )
+        return SELECT_COMPAGNO  # rimani nello stato corrente
+
+    # Se valido, procedi
+    context.user_data["compagno"] = compagno
+
+    # Ora prepara lista avversari possibili (escludendo utente e compagno)
+    avversari_possibili = [v["nickname"] for v in user_db.values() if v["nickname"] not in [nickname_utente, compagno]]
     markup = ReplyKeyboardMarkup([[n] for n in avversari_possibili], one_time_keyboard=True, resize_keyboard=True)
+
     await update.message.reply_text("Abbiamo giocato contro", reply_markup=markup)
     return SELECT_AVV1
 
