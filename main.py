@@ -96,8 +96,8 @@ async def mostra_profilo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     # Calcola statistiche
     partite_utente = [p for p in storico_partite if nickname in p["squadra"] or nickname in p["avversari"]]
     vinte = sum(1 for p in partite_utente if
-                (nickname in p["squadra"] and p["esito"] == "Vinto") or
-                (nickname in p["avversari"] and p["esito"] == "Perso"))
+                (nickname in p["squadra"] and p["esito"] == "Vittoria") or
+                (nickname in p["avversari"] and p["esito"] == "Sconfitta"))
     perse = len(partite_utente) - vinte
 
     testo_profilo = (
