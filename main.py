@@ -300,6 +300,11 @@ async def nuova_partita(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 
 async def select_compagno(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     compagno = update.message.text
+    try:
+        with open(DB_UTENTI_FILE, "r", encoding="utf-8") as f:
+            user_db = json.load(f)
+    except FileNotFoundError:
+        user_db = {}    
     user = context.user_data["giocatore"]
     nickname_utente = user["nickname"]
 
@@ -354,7 +359,11 @@ async def select_avversario1(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 async def select_avversario2(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     avv2 = update.message.text
-
+    try:
+        with open(DB_UTENTI_FILE, "r", encoding="utf-8") as f:
+            user_db = json.load(f)
+    except FileNotFoundError:
+        user_db = {}
     esclusi = [
         context.user_data["giocatore"]["nickname"],
         context.user_data["compagno"],
