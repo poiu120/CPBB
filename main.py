@@ -352,6 +352,13 @@ async def select_avversario2(update: Update, context: ContextTypes.DEFAULT_TYPE)
 import math
 
 async def select_esito(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    # Carica user_db da file esterno (archivio_utenti.json)
+    try:
+        with open("archivio_utenti.json", "r") as f:
+            user_db = json.load(f)
+    except FileNotFoundError:
+        user_db = {}
+
     esito = update.message.text  # "Vinto" o "Perso"
     dati = context.user_data
 
@@ -367,7 +374,6 @@ async def select_esito(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
                 R[nick] = user["punteggio"]
                 K[nick] = user["K"]
                 break
-
     k = 0.45
     R_std = 600
 
