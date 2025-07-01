@@ -31,18 +31,27 @@ main_menu_markup = ReplyKeyboardMarkup(main_menu_keyboard, resize_keyboard=True,
 
 
 # Database in memoria
-user_db = {
-    111111: {"nickname": "mario_r", "nome": "Mario", "cognome": "Rossi", "punteggio": 1000, "K": 60},
-    222222: {"nickname": "luigi_v", "nome": "Luigi", "cognome": "Verdi", "punteggio": 1000, "K": 60},
-    333333: {"nickname": "anna_b", "nome": "Anna", "cognome": "Bianchi", "punteggio": 1000, "K": 60},
-    444444: {"nickname": "carla_m", "nome": "Carla", "cognome": "Marini", "punteggio": 1000, "K": 60},
-    555555: {"nickname": "luca_n", "nome": "Luca", "cognome": "Neri", "punteggio": 1000, "K": 60},
-    666666: {"nickname": "paolo_d", "nome": "Paolo", "cognome": "De Luca", "punteggio": 1000, "K": 60},
-    777777: {"nickname": "sara_f", "nome": "Sara", "cognome": "Ferrari", "punteggio": 1000, "K": 60},
-    888888: {"nickname": "giulia_s", "nome": "Giulia", "cognome": "Seri", "punteggio": 1000, "K": 60},
-    999999: {"nickname": "marco_g", "nome": "Marco", "cognome": "Gallo", "punteggio": 1000, "K": 60},
-    101010: {"nickname": "elena_p", "nome": "Elena", "cognome": "Pini", "punteggio": 1000, "K": 60}
-}
+import json
+
+with open("archivio_utenti.json", "r", encoding="utf-8") as f:
+    user_db = json.load(f)
+
+import time
+
+DB_UTENTI_FILE = "archivio_utenti.json"
+
+def carica_db_utenti():
+    try:
+        with open(DB_UTENTI_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {}
+
+def salva_db_utenti(db):
+    with open(DB_UTENTI_FILE, "w", encoding="utf-8") as f:
+        json.dump(db, f, indent=2, ensure_ascii=False)
+
+user_db = carica_db_utenti()
 
 async def info_app(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     testo_info = (
@@ -85,8 +94,11 @@ async def mostra_profilo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 storico_partite = []
 
+from telegram import ReplyKeyboardRemove
+from telegram.ext import ContextTypes
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    user_id = update.effective_user.id
+    user_id = str(update.effective_user.id)  # attenzione: user_id come stringa per JSON
     context.user_data.clear()
 
     if user_id in user_db:
@@ -103,27 +115,24 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         )
         return ASK_NICKNAME
 
-async def ask_nickname(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    context.user_data["nickname"] = update.message.text.strip()
-    await update.message.reply_text("Perfetto! Ora inserisci il tuo Nome e Cognome:")
-    return ASK_NAME
-
-
-
 async def ask_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    user_id = update.effective_user.id
+    user_id = str(update.effective_user.id)  # user_id come stringa
     user_db[user_id] = {
         "nickname": context.user_data["nickname"],
         "name": update.message.text.strip(),
         "username": update.effective_user.username or "",
         "punteggio": 1000,
-        "K": 60
+        "K": 60,
+        "timestamp": int(time.time())   # salva timestamp unix
     }
+    salva_db_utenti(user_db)  # salva subito su file!
+
     await update.message.reply_text(
         f"Grazie {context.user_data['nickname']}! Ora puoi scegliere un'opzione dal menu.",
         reply_markup=main_menu_markup,
     )
     return MAIN_MENU
+
 
 async def mostra_storico(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_id = update.effective_user.id
