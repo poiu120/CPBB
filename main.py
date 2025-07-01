@@ -323,7 +323,12 @@ async def select_compagno(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
 async def select_avversario1(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     avv1 = update.message.text
-    user_db = carica_db_utenti()
+    
+    try:
+        with open(DB_UTENTI_FILE, "r", encoding="utf-8") as f:
+            user_db = json.load(f)
+    except FileNotFoundError:
+        user_db = {}
 
     esclusi = [
         context.user_data["giocatore"]["nickname"],
