@@ -392,8 +392,17 @@ async def select_esito(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     RC_nuovo = RC + K[squadra_2[0]] * (S_2 - E_2)
     RD_nuovo = RD + K[squadra_2[1]] * (S_2 - E_2)
 
-    # Salva i nuovi punteggi nel db
-    for user in user_db.values():
+    import json
+    
+    # Carica utenti
+    try:
+        with open("archivio_utenti.json", "r") as f:
+            user_db = json.load(f)
+    except FileNotFoundError:
+        user_db = {}
+    
+    # Aggiorna punteggi
+    for user_id, user in user_db.items():
         if user["nickname"] == squadra_1[0]:
             user["punteggio"] = round(RA_nuovo)
         elif user["nickname"] == squadra_1[1]:
@@ -402,8 +411,12 @@ async def select_esito(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
             user["punteggio"] = round(RC_nuovo)
         elif user["nickname"] == squadra_2[1]:
             user["punteggio"] = round(RD_nuovo)
-
-    # Salva risultato nello storico
+    
+    # Salva utenti aggiornati
+    with open("archivio_utenti.json", "w") as f:
+        json.dump(user_db, f, indent=2)
+    
+    # Aggiorna storico
     try:
         with open("storico.json", "r") as f:
             storico = json.load(f)
@@ -414,6 +427,7 @@ async def select_esito(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     
     with open("storico.json", "w") as f:
         json.dump(storico, f, indent=2)
+
 
 
     # Notifica ai giocatori coinvolti (escludendo l'autore)
