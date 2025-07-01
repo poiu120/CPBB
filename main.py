@@ -40,6 +40,10 @@ import time
 
 DB_UTENTI_FILE = "archivio_utenti.json"
 
+if os.path.exists("storico_partite.json"):
+    with open("storico_partite.json", "r") as f:
+        storico_partite = json.load(f)
+
 def carica_db_utenti():
     try:
         with open(DB_UTENTI_FILE, "r", encoding="utf-8") as f:
@@ -67,13 +71,29 @@ async def info_app(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def mostra_profilo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_id = update.effective_user.id
-    user = user_db.get(user_id)
+
+    # Leggi il database esterno degli utenti
+    try:
+        with open("utenti.json", "r") as f:
+            user_db = json.load(f)
+    except FileNotFoundError:
+        user_db = {}
+
+    user = user_db.get(str(user_id))
     if not user:
         await update.message.reply_text("Utente non trovato nel database.")
         return MAIN_MENU
 
-    # Calcola statistiche semplici da storico_partite:
     nickname = user["nickname"]
+
+    # Leggi lo storico partite dal file
+    try:
+        with open("storico.json", "r") as f:
+            storico_partite = json.load(f)
+    except FileNotFoundError:
+        storico_partite = []
+
+    # Calcola statistiche
     partite_utente = [p for p in storico_partite if nickname in p["squadra"] or nickname in p["avversari"]]
     vinte = sum(1 for p in partite_utente if
                 (nickname in p["squadra"] and p["esito"] == "Vinto") or
@@ -92,10 +112,7 @@ async def mostra_profilo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     await update.message.reply_markdown(text=testo_profilo, reply_markup=keyboard)
     return PROFILE_MENU
 
-storico_partite = []
 
-from telegram import ReplyKeyboardRemove
-from telegram.ext import ContextTypes
 
 # start(): prima funzione chiamata
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -365,11 +382,17 @@ async def select_esito(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
             user["punteggio"] = round(RD_nuovo)
 
     # Salva risultato nello storico
-    storico_partite.append({
-        "squadra": squadra_1,
-        "avversari": squadra_2,
-        "esito": esito
-    })
+    try:
+        with open("storico.json", "r") as f:
+            storico = json.load(f)
+    except FileNotFoundError:
+        storico = []
+    
+    storico.append(risultato)
+    
+    with open("storico.json", "w") as f:
+        json.dump(storico, f, indent=2)
+
 
     # Notifica ai giocatori coinvolti (escludendo l'autore)
     autore = dati["giocatore"]["nickname"]
