@@ -1,5 +1,3 @@
-// archivio_utenti.json
-
 {
   "111111": {"nickname": "mario_r", "nome": "Mario", "cognome": "Rossi", "punteggio": 1000, "K": 60, "timestamp": "2025-07-01T12:00:00"},
   "222222": {"nickname": "luigi_v", "nome": "Luigi", "cognome": "Verdi", "punteggio": 1000, "K": 60, "timestamp": "2025-07-01T12:00:00"},
