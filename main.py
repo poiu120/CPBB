@@ -201,8 +201,8 @@ async def mostra_storico(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             squadra_1 = " & ".join(p["squadra"])
             squadra_2 = " & ".join(p["avversari"])
             risultato_estratto = ("Vittoria" if
-                         (nickname in p["squadra"] and p["esito"] == "Vinto") or
-                         (nickname in p["avversari"] and p["esito"] == "Perso")
+                         (nickname in p["squadra"] and p["esito"] == "Vittoria") or
+                         (nickname in p["avversari"] and p["esito"] == "Sconfitta")
                          else "Sconfitta")
             righe.append(f"{squadra_1} vs {squadra_2} -> {risultato_estratto}")
 
