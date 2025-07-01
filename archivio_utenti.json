@@ -1,14 +1,14 @@
 // archivio_utenti.json
 
 {
-  "111111": {"nickname": "mario_r", "nome": "Mario", "cognome": "Rossi", "punteggio": 1000, "K": 60},
-  "222222": {"nickname": "luigi_v", "nome": "Luigi", "cognome": "Verdi", "punteggio": 1000, "K": 60},
-  "333333": {"nickname": "anna_b", "nome": "Anna", "cognome": "Bianchi", "punteggio": 1000, "K": 60},
-  "444444": {"nickname": "carla_m", "nome": "Carla", "cognome": "Marini", "punteggio": 1000, "K": 60},
-  "555555": {"nickname": "luca_n", "nome": "Luca", "cognome": "Neri", "punteggio": 1000, "K": 60},
-  "666666": {"nickname": "paolo_d", "nome": "Paolo", "cognome": "De Luca", "punteggio": 1000, "K": 60},
-  "777777": {"nickname": "sara_f", "nome": "Sara", "cognome": "Ferrari", "punteggio": 1000, "K": 60},
-  "888888": {"nickname": "giulia_s", "nome": "Giulia", "cognome": "Seri", "punteggio": 1000, "K": 60},
-  "999999": {"nickname": "marco_g", "nome": "Marco", "cognome": "Gallo", "punteggio": 1000, "K": 60},
-  "101010": {"nickname": "elena_p", "nome": "Elena", "cognome": "Pini", "punteggio": 1000, "K": 60}
+  "111111": {"nickname": "mario_r", "nome": "Mario", "cognome": "Rossi", "punteggio": 1000, "K": 60, "timestamp": "2025-07-01T12:00:00"},
+  "222222": {"nickname": "luigi_v", "nome": "Luigi", "cognome": "Verdi", "punteggio": 1000, "K": 60, "timestamp": "2025-07-01T12:00:00"},
+  "333333": {"nickname": "anna_b", "nome": "Anna", "cognome": "Bianchi", "punteggio": 1000, "K": 60, "timestamp": "2025-07-01T12:00:00"},
+  "444444": {"nickname": "carla_m", "nome": "Carla", "cognome": "Marini", "punteggio": 1000, "K": 60, "timestamp": "2025-07-01T12:00:00"},
+  "555555": {"nickname": "luca_n", "nome": "Luca", "cognome": "Neri", "punteggio": 1000, "K": 60, "timestamp": "2025-07-01T12:00:00"},
+  "666666": {"nickname": "paolo_d", "nome": "Paolo", "cognome": "De Luca", "punteggio": 1000, "K": 60, "timestamp": "2025-07-01T12:00:00"},
+  "777777": {"nickname": "sara_f", "nome": "Sara", "cognome": "Ferrari", "punteggio": 1000, "K": 60, "timestamp": "2025-07-01T12:00:00"},
+  "888888": {"nickname": "giulia_s", "nome": "Giulia", "cognome": "Seri", "punteggio": 1000, "K": 60, "timestamp": "2025-07-01T12:00:00"},
+  "999999": {"nickname": "marco_g", "nome": "Marco", "cognome": "Gallo", "punteggio": 1000, "K": 60, "timestamp": "2025-07-01T12:00:00"},
+  "101010": {"nickname": "elena_p", "nome": "Elena", "cognome": "Pini", "punteggio": 1000, "K": 60, "timestamp": "2025-07-01T12:00:00"}
 }
