@@ -74,7 +74,7 @@ async def mostra_profilo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     # Leggi il database esterno degli utenti
     try:
-        with open("utenti.json", "r") as f:
+        with open("archivio_utenti.json", "r") as f:
             user_db = json.load(f)
     except FileNotFoundError:
         user_db = {}
