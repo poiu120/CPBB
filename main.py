@@ -97,8 +97,9 @@ storico_partite = []
 from telegram import ReplyKeyboardRemove
 from telegram.ext import ContextTypes
 
+# start(): prima funzione chiamata
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    user_id = str(update.effective_user.id)  # attenzione: user_id come stringa per JSON
+    user_id = str(update.effective_user.id)
     context.user_data.clear()
 
     if user_id in user_db:
@@ -115,17 +116,30 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         )
         return ASK_NICKNAME
 
+# ask_nickname(): riceve il nickname, lo salva temporaneamente in user_data
+async def ask_nickname(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    nickname = update.message.text.strip()
+
+    # puoi anche aggiungere validazioni qui, tipo lunghezza, caratteri, unicità...
+    context.user_data["nickname"] = nickname
+
+    await update.message.reply_text("Perfetto! Ora inserisci il tuo *nome reale*.", parse_mode="Markdown")
+    return ASK_NAME
+
+# ask_name(): riceve il nome e completa la registrazione
 async def ask_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    user_id = str(update.effective_user.id)  # user_id come stringa
+    user_id = str(update.effective_user.id)
+
     user_db[user_id] = {
         "nickname": context.user_data["nickname"],
         "name": update.message.text.strip(),
         "username": update.effective_user.username or "",
         "punteggio": 1000,
         "K": 60,
-        "timestamp": int(time.time())   # salva timestamp unix
+        "timestamp": int(time.time())
     }
-    salva_db_utenti(user_db)  # salva subito su file!
+
+    salva_db_utenti(user_db)
 
     await update.message.reply_text(
         f"Grazie {context.user_data['nickname']}! Ora puoi scegliere un'opzione dal menu.",
