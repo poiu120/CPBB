@@ -425,8 +425,8 @@ async def select_esito(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
         json.dump(user_db, f, indent=2)
     
     risultato = {
-        "squadra_1": squadra_1,
-        "squadra_2": squadra_2,
+        "squadra": squadra_1,
+        "avversari": squadra_2,
         "esito": "Vittoria" if esito == "Vinto" else "Sconfitta",
         "timestamp": int(time.time())
     }
