@@ -147,6 +147,12 @@ async def ask_nickname(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
 async def ask_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_id = str(update.effective_user.id)
 
+    try:
+        with open(DB_UTENTI_FILE, "r", encoding="utf-8") as f:
+            user_db = json.load(f)
+    except FileNotFoundError:
+        user_db = {}
+
     user_db[user_id] = {
         "nickname": context.user_data["nickname"],
         "name": update.message.text.strip(),
