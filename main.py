@@ -117,6 +117,11 @@ async def mostra_profilo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 # start(): prima funzione chiamata
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_id = str(update.effective_user.id)
+    try:
+        with open(DB_UTENTI_FILE, "r", encoding="utf-8") as f:
+            user_db = json.load(f)
+    except FileNotFoundError:
+        user_db = {}    
     context.user_data.clear()
 
     if user_id in user_db:
