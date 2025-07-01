@@ -275,7 +275,21 @@ async def mostra_classifica(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 # ========== Funzioni nuova partita ==========
 
 async def nuova_partita(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    user_id = str(update.effective_user.id)  # Cast a stringa per accedere al JSON
+    user_id = str(update.effective_user.id)
+
+    # ✅ Carica l’ultima versione del database
+    try:
+        with open(DB_UTENTI_FILE, "r", encoding="utf-8") as f:
+            user_db = json.load(f)
+    except FileNotFoundError:
+        user_db = {}
+
+    # ✅ Verifica che l'utente esista
+    if user_id not in user_db:
+        await update.message.reply_text("⚠️ Non risulti registrato. Riprova con /start.")
+        return ConversationHandler.END
+
+    # ✅ Usa il dato corretto
     context.user_data["giocatore"] = user_db[user_id]
 
     # Escludi il giocatore corrente dalla lista dei possibili compagni
