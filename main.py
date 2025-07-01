@@ -167,29 +167,51 @@ async def ask_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def mostra_storico(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_id = update.effective_user.id
-    user = user_db.get(user_id)
+
+    # Leggi il db utenti da file
+    try:
+        with open("utenti.json", "r") as f:
+            user_db = json.load(f)
+    except FileNotFoundError:
+        user_db = {}
+
+    user = user_db.get(str(user_id))
     if not user:
         await update.message.reply_text("Utente non trovato nel database.")
         return MAIN_MENU
 
     nickname = user["nickname"]
+
+    # Leggi lo storico partite da file
+    try:
+        with open("storico.json", "r") as f:
+            storico_partite = json.load(f)
+    except FileNotFoundError:
+        storico_partite = []
+
+    # Filtra le partite dell'utente
     partite_utente = [p for p in storico_partite if nickname in p["squadra"] or nickname in p["avversari"]]
 
     if not partite_utente:
         testo = "Non hai ancora partite registrate."
     else:
         righe = []
-        for p in partite_utente[-10:]:  # mostriamo max 10 ultime partite
-            squadre_1 = " & ".join(p["squadra"])
-            squadre_2 = " & ".join(p["avversari"])
-            risultato = "Vittoria" if (nickname in p["squadra"] and p["esito"] == "Vinto") or (nickname in p["avversari"] and p["esito"] == "Perso") else "Sconfitta"
-            righe.append(f"{squadre_1} vs {squadre_2} -> {risultato}")
+        # Mostra massimo le ultime 10 partite
+        for p in partite_utente[-10:]:
+            squadra_1 = " & ".join(p["squadra"])
+            squadra_2 = " & ".join(p["avversari"])
+            risultato = ("Vittoria" if
+                         (nickname in p["squadra"] and p["esito"] == "Vinto") or
+                         (nickname in p["avversari"] and p["esito"] == "Perso")
+                         else "Sconfitta")
+            righe.append(f"{squadra_1} vs {squadra_2} -> {risultato}")
 
         testo = "Ultime partite:\n" + "\n".join(righe)
 
     keyboard = ReplyKeyboardMarkup([["Indietro"]], resize_keyboard=True, one_time_keyboard=True)
     await update.message.reply_text(testo, reply_markup=keyboard)
     return PROFILE_MENU
+
 
 async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     scelta = update.message.text
