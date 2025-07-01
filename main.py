@@ -200,11 +200,11 @@ async def mostra_storico(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         for p in partite_utente[-10:]:
             squadra_1 = " & ".join(p["squadra"])
             squadra_2 = " & ".join(p["avversari"])
-            risultato = ("Vittoria" if
+            risultato_estratto = ("Vittoria" if
                          (nickname in p["squadra"] and p["esito"] == "Vinto") or
                          (nickname in p["avversari"] and p["esito"] == "Perso")
                          else "Sconfitta")
-            righe.append(f"{squadra_1} vs {squadra_2} -> {risultato}")
+            righe.append(f"{squadra_1} vs {squadra_2} -> {risultato_estratto}")
 
         testo = "Ultime partite:\n" + "\n".join(righe)
 
@@ -424,6 +424,13 @@ async def select_esito(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     with open("archivio_utenti.json", "w") as f:
         json.dump(user_db, f, indent=2)
     
+    risultato = {
+        "squadra_1": squadra_1,
+        "squadra_2": squadra_2,
+        "esito": "Vittoria" if esito == "Vinto" else "Sconfitta",
+        "timestamp": int(time.time())
+    }
+    
     # Aggiorna storico
     try:
         with open("storico.json", "r") as f:
@@ -435,8 +442,6 @@ async def select_esito(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     
     with open("storico.json", "w") as f:
         json.dump(storico, f, indent=2)
-
-
 
     # Notifica ai giocatori coinvolti (escludendo l'autore)
     autore = dati["giocatore"]["nickname"]
