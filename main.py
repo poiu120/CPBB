@@ -263,15 +263,14 @@ async def select_compagno(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     await update.message.reply_text("Abbiamo giocato contro", reply_markup=markup)
     return SELECT_AVV1
 
-
 async def select_avversario1(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     avv1 = update.message.text
 
-    # Controllo: avv1 deve essere in user_db e non tra i già scelti
     esclusi = [
         context.user_data["giocatore"]["nickname"],
         context.user_data["compagno"],
     ]
+
     validi = [v["nickname"] for v in user_db.values() if v["nickname"] not in esclusi]
 
     if avv1 not in validi:
@@ -281,14 +280,13 @@ async def select_avversario1(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
     context.user_data["avv1"] = avv1
 
-    # Prepara lista per il secondo avversario
+    # Aggiorna la lista degli esclusi e genera la lista rimanente
     esclusi.append(avv1)
     avversari_restanti = [v["nickname"] for v in user_db.values() if v["nickname"] not in esclusi]
 
     markup = ReplyKeyboardMarkup([[n] for n in avversari_restanti], one_time_keyboard=True, resize_keyboard=True)
     await update.message.reply_text("e", reply_markup=markup)
     return SELECT_AVV2
-
 
 async def select_avversario2(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     avv2 = update.message.text
@@ -298,6 +296,7 @@ async def select_avversario2(update: Update, context: ContextTypes.DEFAULT_TYPE)
         context.user_data["compagno"],
         context.user_data["avv1"]
     ]
+
     validi = [v["nickname"] for v in user_db.values() if v["nickname"] not in esclusi]
 
     if avv2 not in validi:
@@ -306,6 +305,7 @@ async def select_avversario2(update: Update, context: ContextTypes.DEFAULT_TYPE)
         return SELECT_AVV2
 
     context.user_data["avv2"] = avv2
+
     markup = ReplyKeyboardMarkup([["Vinto", "Perso"]], one_time_keyboard=True, resize_keyboard=True)
     await update.message.reply_text("E abbiamo...", reply_markup=markup)
     return SELECT_ESITO
@@ -323,7 +323,6 @@ async def select_esito(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     R = {}
     K = {}
     for nick in squadra_1 + squadra_2:
-        # Cerca l'utente nel db (per nickname)
         for user in user_db.values():
             if user["nickname"] == nick:
                 R[nick] = user["punteggio"]
@@ -334,27 +333,21 @@ async def select_esito(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     R_std = 600
 
     # Calcola R_1 e R_2
-    RA = R[squadra_1[0]]
-    RB = R[squadra_1[1]]
-    RC = R[squadra_2[0]]
-    RD = R[squadra_2[1]]
+    RA, RB = R[squadra_1[0]], R[squadra_1[1]]
+    RC, RD = R[squadra_2[0]], R[squadra_2[1]]
 
     R_1 = 0.5 * math.sqrt(RA * RB) + 0.5 * (k * max(RA, RB) + (1 - k) * min(RA, RB))
     R_2 = 0.5 * math.sqrt(RC * RD) + 0.5 * (k * max(RC, RD) + (1 - k) * min(RC, RD))
 
-    # Calcola valori attesi
+    # Valori attesi
     E_1 = 1 / (1 + 10 ** ((R_2 - R_1) / R_std))
     E_2 = 1 - E_1
 
-    # Assegna S in base all'esito
-    if esito == "Vinto":
-        S_1 = 1
-        S_2 = 0
-    else:
-        S_1 = 0
-        S_2 = 1
+    # Risultato
+    S_1 = 1 if esito == "Vinto" else 0
+    S_2 = 1 - S_1
 
-    # Aggiorna i punteggi
+    # Nuovi punteggi
     RA_nuovo = RA + K[squadra_1[0]] * (S_1 - E_1)
     RB_nuovo = RB + K[squadra_1[1]] * (S_1 - E_1)
     RC_nuovo = RC + K[squadra_2[0]] * (S_2 - E_2)
@@ -371,37 +364,30 @@ async def select_esito(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
         elif user["nickname"] == squadra_2[1]:
             user["punteggio"] = round(RD_nuovo)
 
-    # Salva risultato in storico
-    risultato = {
+    # Salva risultato nello storico
+    storico_partite.append({
         "squadra": squadra_1,
         "avversari": squadra_2,
         "esito": esito
-    }
-    storico_partite.append(risultato)
-    
-    # --- Inizio codice notifica ---
-    # Manda una notifica ai giocatori coinvolti (escludendo chi ha inserito la partita)
+    })
+
+    # Notifica ai giocatori coinvolti (escludendo l'autore)
     autore = dati["giocatore"]["nickname"]
     coinvolti = set(squadra_1 + squadra_2)
-    coinvolti.discard(autore)  # escludi chi ha inserito
+    coinvolti.discard(autore)
 
-    for nick in coinvolti:
-        # Trova user_id dal nickname per inviare messaggio
-        for user_id, user in user_db.items():
-            if user["nickname"] == nick:
-                try:
-                    await context.bot.send_message(
-                        chat_id=user_id,
-                        text=(
-                            f"⚠️ Ciao {nick}, {autore} ha inserito una partita in cui sei coinvolto!\n"
-                            f"Controlla la classifica aggiornata o il tuo storico partite."
-                        )
+    for user_id_str, user in user_db.items():
+        if user["nickname"] in coinvolti:
+            try:
+                await context.bot.send_message(
+                    chat_id=int(user_id_str),
+                    text=(
+                        f"⚠️ Ciao {user['nickname']}, {autore} ha inserito una partita in cui sei coinvolto!\n"
+                        f"Controlla la classifica aggiornata o il tuo storico partite."
                     )
-                except Exception as e:
-                    print(f"Errore inviando notifica a {nick}: {e}")
-                break
-    # --- Fine codice notifica ---
-    
+                )
+            except Exception as e:
+                print(f"Errore inviando notifica a {user['nickname']}: {e}")
 
     await update.message.reply_text(
         f"✅ Risultato salvato!\n"
@@ -413,8 +399,6 @@ async def select_esito(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
         reply_markup=main_menu_markup
     )
     return MAIN_MENU
-
-
 
 
 # ========== Cancel ==========
