@@ -242,17 +242,25 @@ async def select_compagno(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
 async def select_avversario1(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     avv1 = update.message.text
-    context.user_data["avv1"] = avv1
-    
-    # Prepara lista di nickname da escludere
+
+    # Controllo: avv1 deve essere in user_db e non tra i già scelti
     esclusi = [
         context.user_data["giocatore"]["nickname"],
         context.user_data["compagno"],
-        avv1
     ]
-    
+    validi = [v["nickname"] for v in user_db.values() if v["nickname"] not in esclusi]
+
+    if avv1 not in validi:
+        markup = ReplyKeyboardMarkup([[n] for n in validi], one_time_keyboard=True, resize_keyboard=True)
+        await update.message.reply_text("⚠️ Scegli un avversario valido tra quelli nel menu.", reply_markup=markup)
+        return SELECT_AVV1
+
+    context.user_data["avv1"] = avv1
+
+    # Prepara lista per il secondo avversario
+    esclusi.append(avv1)
     avversari_restanti = [v["nickname"] for v in user_db.values() if v["nickname"] not in esclusi]
-    
+
     markup = ReplyKeyboardMarkup([[n] for n in avversari_restanti], one_time_keyboard=True, resize_keyboard=True)
     await update.message.reply_text("e", reply_markup=markup)
     return SELECT_AVV2
@@ -260,6 +268,19 @@ async def select_avversario1(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 async def select_avversario2(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     avv2 = update.message.text
+
+    esclusi = [
+        context.user_data["giocatore"]["nickname"],
+        context.user_data["compagno"],
+        context.user_data["avv1"]
+    ]
+    validi = [v["nickname"] for v in user_db.values() if v["nickname"] not in esclusi]
+
+    if avv2 not in validi:
+        markup = ReplyKeyboardMarkup([[n] for n in validi], one_time_keyboard=True, resize_keyboard=True)
+        await update.message.reply_text("⚠️ Scegli un avversario valido tra quelli nel menu.", reply_markup=markup)
+        return SELECT_AVV2
+
     context.user_data["avv2"] = avv2
     markup = ReplyKeyboardMarkup([["Vinto", "Perso"]], one_time_keyboard=True, resize_keyboard=True)
     await update.message.reply_text("E abbiamo...", reply_markup=markup)
