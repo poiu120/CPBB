@@ -244,8 +244,14 @@ async def profilo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         await update.message.reply_text("Seleziona una voce valida.")
         return PROFILE_MENU
 
-
 async def mostra_classifica(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    # Ricarica il database utenti dal file esterno per avere dati aggiornati
+    if os.path.exists("archivio_utenti.json"):
+        with open("archivio_utenti.json", "r", encoding="utf-8") as f:
+            user_db = json.load(f)
+    else:
+        user_db = {}
+
     if not user_db:
         await update.message.reply_text("⚠️ Nessun utente registrato.")
         return
@@ -258,7 +264,6 @@ async def mostra_classifica(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         testo += f"{user['nickname']:<25} {user['punteggio']}\n"
 
     await update.message.reply_text(f"```\n{testo}\n```", parse_mode="Markdown")
-
 
 
 # ========== Funzioni nuova partita ==========
