@@ -170,7 +170,7 @@ async def mostra_storico(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     # Leggi il db utenti da file
     try:
-        with open("utenti.json", "r") as f:
+        with open("archivio_utenti.json", "r") as f:
             user_db = json.load(f)
     except FileNotFoundError:
         user_db = {}
