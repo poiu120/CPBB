@@ -225,11 +225,13 @@ async def mostra_classifica(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 # ========== Funzioni nuova partita ==========
 
 async def nuova_partita(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    user_id = update.effective_user.id
-    giocatori = [v["nickname"] for k, v in user_db.items() if k != user_id]
+    user_id = str(update.effective_user.id)  # Cast a stringa per accedere al JSON
     context.user_data["giocatore"] = user_db[user_id]
 
-    if not giocatori or len(giocatori) < 3:
+    # Escludi il giocatore corrente dalla lista dei possibili compagni
+    giocatori = [v["nickname"] for k, v in user_db.items() if k != user_id]
+
+    if len(giocatori) < 3:
         await update.message.reply_text("Servono almeno altri 3 utenti registrati per inserire un risultato.")
         return MAIN_MENU
 
@@ -237,25 +239,24 @@ async def nuova_partita(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     await update.message.reply_text("Ho giocato insieme a", reply_markup=markup)
     return SELECT_COMPAGNO
 
+
 async def select_compagno(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     compagno = update.message.text
     user = context.user_data["giocatore"]
     nickname_utente = user["nickname"]
 
-    # Genera lista di compagni validi (tutti tranne il giocatore stesso)
+    # Lista dei nickname validi (tutti tranne sé stessi)
     compagni_validi = [v["nickname"] for v in user_db.values() if v["nickname"] != nickname_utente]
 
-    # Verifica che l'input sia valido
     if compagno not in compagni_validi:
         await update.message.reply_text(
             "⚠️ Scelta non valida. Seleziona il compagno dalla lista usando i pulsanti."
         )
-        return SELECT_COMPAGNO  # rimani nello stato corrente
+        return SELECT_COMPAGNO
 
-    # Se valido, procedi
     context.user_data["compagno"] = compagno
 
-    # Ora prepara lista avversari possibili (escludendo utente e compagno)
+    # Avversari = tutti tranne giocatore e compagno
     avversari_possibili = [v["nickname"] for v in user_db.values() if v["nickname"] not in [nickname_utente, compagno]]
     markup = ReplyKeyboardMarkup([[n] for n in avversari_possibili], one_time_keyboard=True, resize_keyboard=True)
 
